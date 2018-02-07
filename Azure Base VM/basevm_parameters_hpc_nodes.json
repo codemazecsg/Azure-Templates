@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "projectID": {
+            "value": "HPCManualGrid"
+        },
+        "vnetResourceGroupName": {
+            "value": "HPCManualGrid"
+        },
+        "virtualNetworkName": {
+            "value": "HPCManualGridNetwork"
+        },
+        "subnetName": {
+            "value": "subnet-2"
+        },
+        "staticPrivateIPAddress": {
+            "value": [
+                "192.168.1.70",
+                "192.168.1.71",
+                "192.168.1.72",
+                "192.168.1.73",
+                "192.168.1.74",
+                "192.168.1.75",
+                "192.168.1.76",
+                "192.168.1.77",
+                "192.168.1.78"
+            ]
+        },
+        "deployPublicIpAddress": {
+            "value": "false"
+        },
+        "vmPrefix": {
+            "value": "HPCNODE"
+        },
+        "vmCount": {
+            "value": 9
+        },
+        "vmSKU": {
+            "value": "Standard_F8"
+        },
+        "availabilitySetPrefix": {
+            "value": "HPCAvailSet"
+        },        
+        "nbrAvailabilitySet": {
+            "value": 3
+        },
+        "diskType": {
+            "value": "Standard_LRS"
+        },
+        "osDiskSizeInGB": {
+            "value": 128
+        },
+        "dataDiskSizeInGB": {
+            "value": 256
+        },
+        "osType": {
+            "value": "Windows"
+        },
+        "imagePublisher": {
+            "value": "MicrosoftWindowsServer"
+        },
+        "imageOffer": {
+            "value": "WindowsServer"
+        },
+        "imageSKU": {
+            "value": "2016-DataCenter"
+        },
+        "adminUsername": {
+            "value": "askj"
+        }
+    }
+}
