@@ -5,6 +5,9 @@
         "projectID": {
             "value": "VMLab"
         },
+        "baseIndex": {
+            "value": 1
+        },
         "vnetResourceGroupName": {
             "value": "VMLab"
         },
@@ -16,20 +19,14 @@
         },
         "staticPrivateIPAddress": {
             "value": [
-                "192.168.1.5",
-                "192.168.1.6",
-                "192.168.1.7",
-                "192.168.1.8"
+                "192.168.1.5"
             ]
-        },
-        "deployPublicIpAddress": {
-            "value": "false"
         },
         "vmPrefix": {
             "value": "VMLab"
         },
         "vmCount": {
-            "value": 4
+            "value": 1
         },
         "vmSKU": {
             "value": "Standard_DS4_v2"
@@ -38,11 +35,14 @@
             "value": "AvailSet"
         },        
         "nbrAvailabilitySet": {
-            "value": 2
+            "value": 1
         },
         "diskType": {
             "value": "Premium_LRS"
         },
+        "dataDisksPerVM": {
+            "value": 1
+        },        
         "osDiskSizeInGB": {
             "value": 128
         },

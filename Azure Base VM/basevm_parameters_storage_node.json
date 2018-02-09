@@ -3,10 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "projectID": {
-            "value": "HPCManualGrid"
+            "value": "HPCManualGrid-SQL"
+        },
+        "baseIndex": {
+            "value": 1
         },
         "vnetResourceGroupName": {
-            "value": "HPCManualGrid"
+            "value": "HPCManualGrid-Network"
         },
         "virtualNetworkName": {
             "value": "HPCManualGridNetwork"
@@ -16,18 +19,14 @@
         },
         "staticPrivateIPAddress": {
             "value": [
-                "192.168.1.7",
-                "192.168.1.8"
+                "192.168.1.10"
             ]
-        },
-        "deployPublicIpAddress": {
-            "value": "true"
         },
         "vmPrefix": {
             "value": "HPCSQL"
         },
         "vmCount": {
-            "value": 2
+            "value": 1
         },
         "vmSKU": {
             "value": "Standard_E8s_v3"
@@ -41,6 +40,9 @@
         "diskType": {
             "value": "Premium_LRS"
         },
+        "dataDisksPerVM": {
+            "value": 2
+        },        
         "osDiskSizeInGB": {
             "value": 128
         },

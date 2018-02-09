@@ -3,10 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "projectID": {
-            "value": "HPCManualGrid"
-        },
-        "location": {
-            "value": "East US"
+            "value": "HPCManualGrid-Network"
         },
         "virtualNetworkName": {
             "value": "HPCManualGridNetwork"

@@ -8,6 +8,12 @@
                 "description": "Value for tagging this/these VM(s)"
             }
         },
+        "baseIndex": {
+            "type": "int",
+            "metadata": {
+                "description": "Base value to use for indexing"
+            }
+        },
         "vnetResourceGroupName": {
             "type": "string",
             "metadata": {
@@ -30,12 +36,6 @@
             "type": "array",
             "metadata": {
                 "description": "Array of static IP addresses to use for VM(s)"
-            }
-        },
-        "deployPublicIPAddress": {
-            "type": "string",
-            "metadata": {
-                "description": "Condition to set whether a public IP address is included"
             }
         },
         "vmPrefix": {
@@ -236,6 +236,12 @@
                 "Premium_LRS"                
             ]
         },
+        "dataDisksPerVM": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of data disks per VM - at least 1"
+            }
+        },        
         "osDiskSizeInGB": {
             "type": "int",
             "metadata": {
@@ -292,9 +298,8 @@
     "variables": {
         "apiVersionV1": "2017-06-01",
         "apiVersionV2": "2017-03-30",
-        "publicIpPrefix": "pip-",
-        "dataDiskSuffix": "-datadisk",
         "osDiskSuffix": "-osDisk",
+        "dataDiskSuffix": "-dataDisk",
         "vnetID": "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "subnetRef": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vnetResourceGroupName'), '/providers/', variables('vnetID'), '/subnets/', parameters('subnetName'))]",
         "updateDomains": 5,
@@ -304,7 +309,7 @@
         {
             "apiVersion": "[variables('apiVersionV2')]",
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "[concat(parameters('availabilitySetPrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+            "name": "[concat(parameters('availabilitySetPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'))]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "copyAvailabilitySets",
@@ -322,59 +327,9 @@
             }
         },
         {
-            "condition": "[equals(parameters('deployPublicIPAddress'), 'true')]",
-            "apiVersion": "[variables('apiVersionV1')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[concat(variables('publicIpPrefix'), padLeft(string(copyIndex()), 3, '0'))]",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic"
-            },
-            "copy": {
-                "name": "copyPublicIPAddresses",
-                "count": "[parameters('vmCount')]"
-            },
-            "tags": {
-                "displayName": "[parameters('projectID')]"
-            }
-        },
-        {
-            "condition": "[equals(parameters('deployPublicIPAddress'), 'true')]",
             "apiVersion": "[variables('apiVersionV1')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), '-pubnic')]",
-            "location": "[resourceGroup().location]",
-            "copy": {
-                "name": "copyNICs",
-                "count": "[parameters('vmCount')]"
-            },
-            "dependsOn": [
-                "copyPublicIPAddresses"
-            ],
-            "tags": {
-                "displayName": "[parameters('projectID')]"
-            },
-            "properties": {
-                "ipConfigurations": [{
-                    "name": "IPConfig",
-                    "properties": {
-                        "privateIPAllocationMethod": "Static",
-                        "privateIPAddress": "[parameters('staticPrivateIPAddress')[copyIndex()]]",
-                        "publicIPAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpPrefix'), padLeft(string(copyIndex()), 3, '0')))]"
-                        },
-                        "subnet": {
-                            "id": "[variables('subnetRef')]"
-                        }
-                    }
-                }]
-            }
-        },
-        {
-            "condition": "[not(equals(parameters('deployPublicIPAddress'), 'true'))]",
-            "apiVersion": "[variables('apiVersionV1')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), '-privnic')]",
+            "name": "[concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'), '-nic')]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "copyNICs",
@@ -398,37 +353,14 @@
         },        
         {
             "apiVersion": "[variables('apiVersionV2')]",
-            "type": "Microsoft.Compute/disks",
-            "name": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), variables('dataDiskSuffix'))]",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "[parameters('diskType')]"
-            },
-            "tags": {
-                "displayName": "[parameters('projectID')]"
-            },            
-            "properties": {
-                "creationData": {
-                    "createOption": "Empty"
-                },
-                "diskSizeGB": "[parameters('dataDiskSizeInGB')]"
-            },
-            "copy": {
-                "name": "copyDataDisk",
-                "count": "[parameters('vmCount')]"
-            }
-        },
-        {
-            "apiVersion": "[variables('apiVersionV2')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+            "name": "[concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'))]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "copyVMs",
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "copyDataDisk",
                 "copyNICs",
                 "copyAvailabilitySets"
             ],
@@ -437,17 +369,28 @@
             },
             "properties": {
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('availabilitySetPrefix'), padLeft(string(mod(copyIndex(), parameters('nbrAvailabilitySet'))), 3, '0')))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('availabilitySetPrefix'), padLeft(string(add(mod(copyIndex(), parameters('nbrAvailabilitySet')), parameters('baseIndex'))), 3, '0')))]"
                 },
                 "hardwareProfile": {
                     "vmSize": "[parameters('vmSKU')]"
                 },
                 "osProfile": {
-                    "computerName": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+                    "computerName": "[concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'))]",
                     "adminUserName": "[parameters('adminUserName')]",
                     "adminPassword": "[parameters('adminUserPassword')]"
                 },
                 "storageProfile": {
+                    "copy": [{
+                        "name": "dataDisks",
+                        "count": "[parameters('dataDisksPerVM')]",
+                        "sku": "[parameters('diskType')]",                        
+                        "input": {
+                            "name": "[concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex('CopyVMs'))), 3, '0'), variables('dataDiskSuffix'), padLeft(string(copyIndex('dataDisks')), 2, '0'))]",
+                            "lun": "[copyIndex('dataDisks')]",
+                            "createOption": "Empty",
+                            "diskSizeGB": "[parameters('dataDiskSizeInGB')]"
+                        }
+                    }],                    
                     "imageReference": {
                         "publisher": "[parameters('imagePublisher')]",
                         "offer": "[parameters('imageOffer')]",
@@ -458,28 +401,20 @@
                         "osType": "[parameters('osType')]",
                         "caching": "ReadWrite",
                         "createOption": "FromImage",
-                        "name": "[concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), variables('osDiskSuffix'))]",
+                        "name": "[concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'), variables('osDiskSuffix'))]",
                         "managedDisk": {
                             "storageAccountType": "[parameters('diskType')]"
                         },
                         "diskSizeGB": "[parameters('osDiskSizeInGB')]"
-                    },
-                    "dataDisks": [{
-                        "lun": "[string(copyIndex())]",
-                        "managedDisk": {
-                            "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), variables('dataDiskSuffix')))]"
-                        },
-                        "caching": "None",
-                        "createOption": "Attach"
-                    }]
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), padLeft(string(copyIndex()), 3, '0'), if(equals(parameters('deployPublicIPAddress'), 'true'), '-pubnic', '-privnic')))]"
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmPrefix'), padLeft(string(add(parameters('baseIndex'), copyIndex())), 3, '0'), '-nic'))]"
                     }]
                 }
             }
-        }
+        }     
     ],
     "outputs": {}
 }

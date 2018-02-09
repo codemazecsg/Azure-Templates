@@ -3,10 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "projectID": {
-            "value": "HPCManualGrid"
+            "value": "HPCManualGrid-CN"
+        },
+        "baseIndex": {
+            "value": 1
         },
         "vnetResourceGroupName": {
-            "value": "HPCManualGrid"
+            "value": "HPCManualGrid-Network"
         },
         "virtualNetworkName": {
             "value": "HPCManualGridNetwork"
@@ -16,7 +19,6 @@
         },
         "staticPrivateIPAddress": {
             "value": [
-                "192.168.1.70",
                 "192.168.1.71",
                 "192.168.1.72",
                 "192.168.1.73",
@@ -24,14 +26,12 @@
                 "192.168.1.75",
                 "192.168.1.76",
                 "192.168.1.77",
-                "192.168.1.78"
+                "192.168.1.78",
+                "192.168.1.79"
             ]
         },
-        "deployPublicIpAddress": {
-            "value": "false"
-        },
         "vmPrefix": {
-            "value": "HPCNODE"
+            "value": "HPCCN"
         },
         "vmCount": {
             "value": 9
@@ -40,7 +40,7 @@
             "value": "Standard_F8"
         },
         "availabilitySetPrefix": {
-            "value": "HPCAvailSet"
+            "value": "HPCCNAvailSet"
         },        
         "nbrAvailabilitySet": {
             "value": 3
@@ -48,6 +48,9 @@
         "diskType": {
             "value": "Standard_LRS"
         },
+        "dataDisksPerVM": {
+            "value": 1
+        },        
         "osDiskSizeInGB": {
             "value": 128
         },

@@ -5,37 +5,6 @@
         "projectID": {
             "type": "string"
         },
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "East Asia",
-                "Southeast Asia",
-                "Central US",
-                "East US",
-                "East US 2",
-                "West US",
-                "North Central US",
-                "South Central US",
-                "North Europe",
-                "West Europe",
-                "Japan West",
-                "Japan East",
-                "Brazil South",
-                "Australia East",
-                "Australia Southeast",
-                "South India",
-                "Central India",
-                "West India",
-                "Canada Central",
-                "Canada East",
-                "UK South",
-                "UK West",
-                "West Central US",
-                "West US 2",
-                "Korea Central",
-                "Korea South"
-            ]
-        },
         "virtualNetworkName": {
             "type": "string"
         },
@@ -66,7 +35,7 @@
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.NetWork/virtualNetworks",
             "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [

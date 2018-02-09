@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "projectID": {
-            "value": "HPCManualGrid-AD"
+            "value": "HPCManualGrid-HN"
         },
         "baseIndex": {
             "value": 1
@@ -15,25 +15,25 @@
             "value": "HPCManualGridNetwork"
         },
         "subnetName": {
-            "value": "subnet-1"
+            "value": "subnet-2"
         },
         "staticPrivateIPAddress": {
             "value": [
-                "192.168.1.5"
+                "192.168.1.70"
             ]
         },
         "vmPrefix": {
-            "value": "HPCAD"
+            "value": "HPCHN"
         },
         "vmCount": {
             "value": 1
         },
         "vmSKU": {
-            "value": "Standard_D2_v2"
+            "value": "Standard_F8"
         },
         "availabilitySetPrefix": {
-            "value": "ADAvailSet"
-        },        
+            "value": "HNAvailSet"
+        },
         "nbrAvailabilitySet": {
             "value": 1
         },
@@ -47,7 +47,7 @@
             "value": 128
         },
         "dataDiskSizeInGB": {
-            "value": 128
+            "value": 256
         },
         "osType": {
             "value": "Windows"
