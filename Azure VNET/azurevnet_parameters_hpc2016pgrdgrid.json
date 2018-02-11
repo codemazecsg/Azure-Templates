@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "projectID": {
+            "value": "HPC2016PGRDGrid-Network"
+        },
+        "virtualNetworkName": {
+            "value": "HPC2016PGRDGridNetwork"
+        },
+        "vnetAddressPrefix": {
+            "value": "192.168.1.0/24"
+        },
+        "subnet1Name": {
+            "value": "subnet-1"
+        },
+        "subnet1Prefix": {
+            "value": "192.168.1.0/26"
+        },
+        "subnet2Name": {
+            "value": "subnet-2"
+        },
+        "subnet2Prefix": {
+            "value": "192.168.1.64/26"
+        },
+        "gatewaySubnetPrefix": {
+            "value": "192.168.1.128/29"
+        }     
+    }
+}

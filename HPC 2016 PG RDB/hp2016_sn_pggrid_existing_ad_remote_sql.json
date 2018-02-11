@@ -28,22 +28,56 @@
         "description": "The existing subnet in which all VMs of the HPC cluster will be created."
       }
     },
-    "staticHNPrivateIPAddress": {
+    "staticHNPrivateIPAddress":
+    {
       "type": "string",
       "metadata": {
-        "description": "Static IP address to use for Head Node."
+        "description": "Private IP Address for use with the Head Node."
       }
     },
+    "staticSQLPrivateIPAddress":
+    {
+      "type": "string",
+      "metadata": {
+        "description": "Private IP Address for use with the SQL Server."
+      }
+    },    
     "staticCNPrivateIPAddress": {
       "type": "array",
       "metadata": {
           "description": "Array of static IP addresses to use for Compute Nodes"
       }
-    },    
+    },  
     "domainName": {
       "type": "string",
       "metadata": {
         "description": "The fully qualified domain name (FQDN) for the existing domain forest in which the HPC cluster will join, for example 'hpc.local'."
+      }
+    },
+    "sqlServerVMName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
+      "metadata": {
+        "description": "The name of the SQL Server VM. It must be unique in the domain forest."
+      }
+    },
+    "sqlServerDiskType": {
+      "type": "string",
+      "defaultValue": "SSD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of the SQL Server VM. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
+      }
+    },
+    "sqlServerVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS4_v2",
+      "metadata": {
+        "description": "The VM size for the SQL Server VM, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes"
       }
     },
     "headNodeOS": {
@@ -180,9 +214,6 @@
     "cnAvailabilitySetNamePrefix": "[concat(parameters('computeNodeNamePrefix'), 'avset')]",
     "nbrVMPerAvailabilitySet": 80,
     "cnAvailabilitySetNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrVMPerAvailabilitySet')), 1)]",
-    "uniqueSuffix": "[uniqueString(variables('subnetRef'))]",
-    "uniqueNicSuffix": "[concat('-nic-', variables('uniqueSuffix'))]",
-    "nicNameHN": "[concat(parameters('clusterName'), variables('uniqueNicSuffix'))]",
     "certSecrets": [
       {
         "sourceVault": {
@@ -238,7 +269,7 @@
     },
     "headNodeImageRef": "[variables('headNodeImages')[parameters('headNodeOS')]]",
     "computeNodeImageRef": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
-    "sharedResxBaseUrl": "https://hpcdeploymentresources.blob.core.windows.net/sharedresources"
+    "sharedResxBaseUrl": "https://hpcdeploymentresources.blob.core.windows.net/rdsharedresources"
   },
   "resources": [
     {
@@ -251,85 +282,45 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicNameHN')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IPConfig",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[parameters('staticHNPrivateIPAddress')]",
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2016-04-30-preview",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('clusterName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('headNodeVMSize')]"
-        },
-        "osProfile": {
-          "computerName": "[parameters('clusterName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "windowsConfiguration": {
-            "enableAutomaticUpdates": false
-          },
-          "secrets": "[variables('certSecrets')]"
-        },
-        "storageProfile": {
-          "imageReference": "[variables('headNodeImageRef')]",
-          "osDisk": {
-            "name": "[concat(parameters('clusterName'), '-osdisk')]",
-            "caching": "ReadOnly",
-            "createOption": "FromImage",
-            "managedDisk": {
-              "storageAccountType": "[variables('storageAccountTypes')[parameters('headNodeDiskType')]]"
-            }
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('clusterName'), variables('uniqueNicSuffix')))]"
-            }
-          ]
-        }
-      }
-    },
-    {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('joinDomain', parameters('clusterName'))]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
-      ],
+      "name": "[concat('createHN', parameters('clusterName'))]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('sharedResxBaseUrl'),'/dsc-extension.json')]",
+          "uri": "[concat(variables('sharedResxBaseUrl'),'/windowsvm-dsc-noavs.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "apiVersion": {
             "value": "[variables('apiVersion')]"
           },
+          "subnetId": {
+            "value": "[variables('subnetRef')]"
+          },
+          "staticIPAddress": {
+            "value": "[parameters('staticHNPrivateIPAddress')]"
+          },
           "vmName": {
             "value": "[parameters('clusterName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('headNodeVMSize')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountTypes')[parameters('headNodeDiskType')]]"
+          },
+          "imageReference": {
+            "value": "[variables('headNodeImageRef')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "secrets": {
+            "value": "[variables('certSecrets')]"
           },
           "dscExtensionName": {
             "value": "setupHpcHeadNode"
@@ -360,12 +351,171 @@
       }
     },
     {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('createDBServer', parameters('sqlServerVMName'))]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('sharedResxBaseUrl'), '/windowsvm-dsc-noavs.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
+          },
+          "subnetId": {
+            "value": "[variables('subnetRef')]"
+          },
+          "staticIPAddress": {
+            "value": "[parameters('staticSQLPrivateIPAddress')]"
+          },
+          "vmName": {
+            "value": "[parameters('sqlServerVMName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('sqlServerVMSize')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountTypes')[parameters('sqlServerDiskType')]]"
+          },
+          "imageReference": {
+            "value": {
+              "publisher": "MicrosoftSQLServer",
+              "offer": "SQL2016SP1-WS2016",
+              "sku": "Standard",
+              "version": "latest"
+            }
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dataDiskSizeInGB": {
+            "value": 200
+          },
+          "dscExtensionName": {
+            "value": "configSQLServer"
+          },
+          "dscSettings": {
+            "value": {
+              "configuration": {
+                "url": "[concat(variables('sharedResxBaseUrl'),'/ConfigSQLServer.ps1.zip')]",
+                "script": "ConfigSQLServer.ps1",
+                "function": "ConfigSQLServer"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('joinDomain', parameters('sqlServerVMName'))]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/createDBServer', parameters('sqlServerVMName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('sharedResxBaseUrl'),'/dsc-extension.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
+          },
+          "vmName": {
+            "value": "[parameters('sqlServerVMName')]"
+          },
+          "dscExtensionName": {
+            "value": "configSQLServer"
+          },
+          "dscSettings": {
+            "value": {
+              "configuration": {
+                "url": "[concat(variables('sharedResxBaseUrl'),'/JoinADDomain.ps1.zip')]",
+                "script": "JoinADDomain.ps1",
+                "function": "JoinADDomain"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('domainName')]"
+              }
+            }
+          },
+          "dscProtectedSettings": {
+            "value": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "configDBPermissions",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/createHN', parameters('clusterName'))]",
+        "[concat('Microsoft.Resources/deployments/joinDomain', parameters('sqlServerVMName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('sharedResxBaseUrl'),'/dsc-extension.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
+          },
+          "vmName": {
+            "value": "[parameters('sqlServerVMName')]"
+          },
+          "dscExtensionName": {
+            "value": "configSQLServer"
+          },
+          "dscSettings": {
+            "value": {
+              "configuration": {
+                "url": "[concat(variables('sharedResxBaseUrl'),'/ConfigDBPermissions.ps1.zip')]",
+                "script": "ConfigDBPermissions.ps1",
+                "function": "ConfigDBPermissions"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('domainName')]",
+                "HeadNodeList": "[parameters('clusterName')]"
+              }
+            }
+          },
+          "dscProtectedSettings": {
+            "value": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/setupHpcHeadNode')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/joinDomain', parameters('clusterName'))]",
+        "Microsoft.Resources/deployments/configDBPermissions",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
@@ -382,6 +532,7 @@
           "configurationArguments": {
             "SSLThumbprint": "[parameters('certThumbprint')]",
             "LinuxCommOverHttp": true,
+            "SQLServerInstance": "[parameters('sqlServerVMName')]",
             "CNSize": "[parameters('computeNodeVMSize')]",
             "SubscriptionId": "[subscription().subscriptionId]",
             "VNet": "[parameters('virtualNetworkName')]",
