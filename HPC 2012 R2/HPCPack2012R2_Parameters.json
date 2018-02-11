@@ -1,0 +1,126 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "value": "HPC2012R2HN001"
+    },
+		"SqlVMName": {
+			"value": "HPC2012R2SQL001"
+		},
+		"appVMName": {
+			"value": "HPC2012R2APP001"
+		},	
+		"virtualNetworkResourceGroupName": {
+			"value": "HPC2012R2AutoGrid-Network"
+		},
+			"virtualNetworkName": {
+			"value": "HPC2012R2AutoGridNetwork"
+		},
+		"subnetName": {
+			"value": "subnet-2"
+		},
+		"hnPrivateIPAddress": {
+			"value": "192.168.1.70"
+		},
+		"sqlPrivateIPAddress": {
+			"value": "192.168.1.71"
+		},
+		"appPrivateIPAddress": {
+			"value": "192.168.1.72"
+		},	
+		"nbrVMPerAvailabilitySet": {
+			"value": 3
+		},
+		"storageAccountNamePrefix": {
+			"value": "hpc2012r2stor"
+		},
+		"storageAccountStartIndex": {
+			"value": 1
+		},
+		"storageAccountType": {
+			"value": "Premium_LRS"
+		},
+		"nbrCNPerStorageAccount": {
+			"value": 25
+		},
+		"headNodeVMSize": {
+			"value": "Standard_F8s"
+		},
+		"sqlVMSize": {
+				"value": "Standard_E8s_v3"
+			},
+		"appVMSize": {
+				"value": "Standard_DS4_v2"
+			},	
+		"SqlDataDiskGiB": {
+				"value": 512
+			},	
+		"appDataDiskGiB": {
+				"value": 512
+			},	
+		"SqlImagePublisher": {
+			"value": "MicrosoftSQLServer"
+		},
+		"SqlImageOffer": {
+			"value": "SQL2012SP3-WS2012R2"
+		},
+		"SqlImageSku": {
+			"value": "Enterprise"
+		},	
+		"appImagePublisher": {
+			"value": "MicrosoftWindowsServer"
+		},
+		"appImageOffer": {
+			"value": "WindowsServer"
+		},
+		"appImageSku": {
+			"value": "2012-R2-Datacenter"
+		},	
+		"hpcNodeImageOsPlatform": {
+			"value": "Windows"
+		},
+		"hpcNodeImagePublisher": {
+			"value": "MicrosoftWindowsServerHPCPack"
+		},
+		"hpcNodeImageOffer": {
+			"value": "WindowsServerHPCPack"
+		},
+		"headNodeImageSku": {
+			"value": "2012R2"
+		},
+		"computeNodeImageSku": {
+			"value": "2012R2CN"
+		},
+		"computeNodeNamePrefix": {
+			"value": "HPC2012R2CN"
+		},
+		"computeNodeNumber": {
+			"value": 9
+		},
+		"computeNodeVMSize": {
+			"value": "Standard_F8s"
+		},
+		"adminUsername": {
+			"value": "askj"
+		},
+		"adminPassword": {
+			"value": "P@ssw0rd123!"
+		},
+		"scriptBaseUri": {
+			"value": "https://hpcdeploymentresources.blob.core.windows.net/hpc2012r2scripts"
+		},
+		"domainToJoin": {
+			"value": "hpc2012r2autog.com"
+		},
+		"domainUserName": {
+			"value": "askj"
+		},
+		"domainPassword": {
+			"value": "P@ssw0rd123!"
+		},
+		"domainJoinOptions": {
+			"value": 3
+		}
+  }
+}

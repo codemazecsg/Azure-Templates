@@ -1,0 +1,82 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "value": "HPC2016PGHN01"
+        },
+        "virtualNetworkName": {
+            "value": "HPC2016PGGridNetwork"
+        },
+        "virtualNetworkResourceGroupName": {
+            "value": "HPC2016PGGrid-Network"
+        },
+        "subnetName": {
+            "value": "subnet-2"
+        },
+        "staticHNPrivateIPAddress": {
+            "value": "192.168.1.70"
+        },
+        "staticCNPrivateIPAddress": {
+            "value": [
+                "192.168.1.71",
+                "192.168.1.72",
+                "192.168.1.73",
+                "192.168.1.74",
+                "192.168.1.75",
+                "192.168.1.76",
+                "192.168.1.77",
+                "192.168.1.78",
+                "192.168.1.79"
+            ]            
+        },
+        "domainName": {
+            "value": "hpc2016pggrid.com"
+        },
+        "headNodeOS": {
+            "value": "WindowsServer2016"
+        },
+        "headNodeDiskType": {
+            "value": "HDD"
+        },
+        "headNodeVMSize": {
+            "value": "Standard_F8"
+        },
+        "computeNodeNamePrefix": {
+            "value": "HPCPG"
+        },
+        "computeNodeNumber": {
+            "value": 9
+        },
+        "computeNodeImage": {
+            "value": "ComputeNodeOnWindowsServer2016"
+        },
+        "computeNodeDiskType": {
+            "value": "HDD"
+        },
+        "computeNodeVMSize": {
+            "value": "Standard_F8"
+        },
+        "adminUserName": {
+            "value": "askj"
+        },
+        "adminPassword": {
+            "value": "P@ssw0rd123!"
+        },
+        "hpcPackVersion": {
+            "value": "latest"
+        },
+        "vaultName": {
+            "value": "hpc2016keyvault"
+        },
+        "vaultResourceGroup": {
+            "value": "HPCKEYVAULT"
+        },
+        "certificateUrl": {
+            "value": "https://hpc2016keyvault.vault.azure.net/secrets/hpccert/30ad5ef07e204683b00c43b4121baa86"
+        },
+        "certThumbprint": {
+            "value": "4929CAD95313F87DF355D4D407593BD84BD73C8F"
+        }
+    }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+		"ProjectID": {
+			"value": "HPC2016PGGrid-AD"
+		},
+		"domainName": {
+			"value": "hpc2016pggrid.com"
+		},
+			"postConfigScriptURI": {
+			"value": "https://hpcdeploymentresources.blob.core.windows.net/scripts"
+		},
+		"networkResourceGroupName": {
+			"value": "HPC2016PGGrid-Network"
+		},
+		"dcPrivateIPAddress": {
+			"value": "192.168.1.5"
+		},
+		"subnetName": {
+			"value": "subnet-1"
+		},
+		"virtualNetworkName": {
+			"value": "HPC2016PGGridNetwork"
+		},
+		"domainControllerName": {
+			"value": "HPC2016PGAD001"
+		},
+		"DCVMSize": {
+			"value": "Standard_D2"
+		},	
+		"adminUsername": {
+			"value": "askj"
+		},
+		"adminPassword": {
+			"value": "P@ssw0rd123!"
+		},
+		"imagePublisher": {
+			"value": "MicrosoftWindowsServer"
+		},
+		"imageOffer": {
+			"value": "WindowsServer"
+		},
+		"imageSKU": {
+			"value": "2016-DataCenter"
+		},
+		"diskType": {
+			"value": "Standard_LRS"
+		}	
+	}
+}

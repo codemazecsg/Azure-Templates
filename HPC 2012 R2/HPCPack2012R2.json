@@ -1,0 +1,803 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The HPC Pack cluster name, also used as the host name of the head node. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+      }
+    },
+	"sqlVMName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Sql Server Data node name. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+      }
+    },
+	"appVMName": {
+      "type": "string",
+      "metadata": {
+        "description": "The App/Storage node name. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+      }
+    },	
+	"virtualNetworkResourceGroupName": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "Name of Resource Group where the virtual network resides."
+	  }
+	},
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network to deploy into. It must contain between 2 and 63 characters, start with a letter, end with a letter or number, and may contain only letters, numbers, underscores, periods, or hyphens."
+      }
+    },
+	"subnetName": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "Name of the subnet to deploy HPC Grid cluster into."
+	  }
+	},
+	"hnPrivateIPAddress": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "Private IP Address for Headnode."
+	  }
+	},
+	"sqlPrivateIPAddress": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "Private IP Address for SQL Server."
+	  }
+	},
+	"appPrivateIPAddress": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "Private IP Address for App/Storage Server."
+	  }
+	},	
+	"nbrVMPerAvailabilitySet": {
+	  "type": "int",
+	  "metadata": {
+	    "description": "Number of VMs per Availability Set."
+	  }
+	},
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The name prefix of the new storage accounts to be created to store the VM disks: one storage account dedicated to the head node & SQL Server, and one storage account for every certain number of compute nodes specified by parameter 'nbrCNPerStorageAccount'. "
+      }
+    },
+    "storageAccountStartIndex": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The start index of the new storage accounts to be created."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "The type of the Storage Account created"
+      }
+    },
+    "nbrCNPerStorageAccount": {
+      "type": "int",
+      "defaultValue": 25,
+      "metadata": {
+        "description": "The maximum number of compute nodes in one storage account."
+      }
+    },
+    "headNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS4",
+      "metadata": {
+        "description": "The VM size for the head node."
+      }
+    },
+    "sqlVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS4",
+      "metadata": {
+        "description": "The VM size for the Sql Server."
+      }
+    },	
+    "appVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS4",
+      "metadata": {
+        "description": "The VM size for the App/Storage Server."
+      }
+    },	
+    "sqlDataDiskGiB": {
+      "type": "int",
+      "defaultValue": 512,
+      "metadata": {
+        "description": "The data disk size for SQL Server."
+      }
+    },	
+    "appDataDiskGiB": {
+      "type": "int",
+      "defaultValue": 512,
+      "metadata": {
+        "description": "The data disk size for App/Storage Server."
+      }
+    },	
+    "sqlImagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image publisher for the SQL Server."
+      }
+    },
+    "sqlImageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image offer for the SQL Server."
+      }
+    },
+    "sqlImageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image sku for the SQL Server."
+      }
+    },	
+    "appImagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image publisher for the APP/Storage Server."
+      }
+    },
+    "appImageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image offer for the APP/Storage Server."
+      }
+    },
+    "appImageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image sku for the APP/Storage Server."
+      }
+    },		
+    "hpcNodeImageOsPlatform": {
+      "type": "string",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
+      "metadata": {
+        "description": "The VM image OS platform for the compute nodes"
+      }
+    },
+    "hpcNodeImagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image publisher for the compute nodes"
+      }
+    },
+    "hpcNodeImageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image offer for the compute nodes"
+      }
+    },
+    "headNodeImageSku": {
+      "type": "string",
+      "metadata": {
+      "description": "The VM image sku for the head node"
+      }
+    },
+    "computeNodeImageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM image sku for the compute nodes"
+      }
+    },
+    "computeNodeNamePrefix": {
+      "type": "string",
+      "defaultValue": "MetCN-",
+      "metadata": {
+        "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
+      }
+    },
+    "computeNodeNumber": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "The number of the compute nodes"
+      }
+    },
+    "computeNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS3",
+      "metadata": {
+        "description": "The VM size for the compute nodes"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Local Administrator user name for the virtual machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Local Administrator password for the virtual machine."
+      }
+    },
+    "scriptBaseUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URI for Scripts",
+        "artifactsBaseUrl": ""
+      }
+    },
+    "domainToJoin": {
+      "type": "string",
+      "metadata": {
+        "description": "The FQDN of the AD domain."
+      }
+    },
+    "domainUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Admin account on the domain."
+      }
+    },
+    "domainPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password of the domain admin account on the domain."
+      }
+    },
+    "domainJoinOptions": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Set of bit flags that define the join options. Default value of 3 is a combination of NETSETUP_JOIN_DOMAIN (0x00000001) & NETSETUP_ACCT_CREATE (0x00000002) i.e. will join the domain and create the account on the domain. For more information see https://msdn.microsoft.com/en-us/library/aa392154(v=vs.85).aspx"
+      }
+    }	
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "computeNodeNumber": "[int(parameters('computeNodeNumber'))]",
+    "cnStorageAccountNumber": "[add(div(sub(variables('computeNodeNumber'), 1), parameters('nbrCNPerStorageAccount')), 1)]",
+    "cnStorageAccountStartIndex": "[parameters('storageAccountStartIndex')]",
+    "storageAccountIndexWidth": 3,
+    "hnStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'hn', padLeft(string(parameters('storageAccountStartIndex')), variables('storageAccountIndexWidth'), '0'))]",
+    "hnStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('hnStorageAccountName'))]",
+    "sqlStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'sql', padLeft(string(parameters('storageAccountStartIndex')), variables('storageAccountIndexWidth'), '0'))]",
+    "appStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'app', padLeft(string(parameters('storageAccountStartIndex')), variables('storageAccountIndexWidth'), '0'))]",
+    "sqlStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('SqlStorageAccountName'))]",
+    "subnet1Name": "[parameters('subnetName')]",
+    "vnetID": "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+    "subnetRef": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('virtualNetworkResourceGroupName'), '/providers/', variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "availabilitySetNamePrefix": "[concat(parameters('clusterName'), '-avset')]",
+    "availabilitySetNumber": "[add(div(variables('computeNodeNumber'), parameters('nbrVMPerAvailabilitySet')), 1)]",
+    "nicNameSuffix": "nic",
+    "nicNameHN": "[concat(parameters('clusterName'), variables('nicNameSuffix'))]",
+    "nicNameSQL": "[concat(parameters('SQLVMName'), variables('nicNameSuffix'))]",
+    "nicNameAPP": "[concat(parameters('appVMName'), variables('nicNameSuffix'))]",
+    "computeNodeCustomData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('hpcNodeImageOffer'), '-', parameters('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]",
+    "domainadminBase64Password": "[base64(parameters('domainPassword'))]",
+	  "adminBase64Password": "[base64(parameters('adminPassword'))]",
+    "iaasInfoArg": "[concat(' -SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', resourceGroup().location, '\" -ResourceGroup ', parameters('virtualNetworkResourceGroupName'))]",
+    "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('domainToJoin'), ' -AdminUserName ', parameters('domainUsername'), ' -AdminBase64Password \"', variables('domainadminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -DBServerInstanceName ', parameters('sqlVMName'), variables('iaasInfoArg'))]",
+    "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]",
+	  "NetBIOSName": "[split(parameters('domainToJoin'), '.')[0]]",
+    "sqlNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File configuresql.ps1 -AdminUserName ', parameters('adminUsername'), ' -AdminPassword ', variables('adminBase64Password'), ' -DomainAdminUserName ', parameters('domainUsername'), ' -DomainNetBiosName ', variables('NetBIOSName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "hpcAvsets",
+        "count": "[variables('availabilitySetNumber')]"
+      }
+    },  
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('hnStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('sqlStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },	
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('appStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },		
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicNameHN')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('hnPrivateIPAddress')]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+	{
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicNameSQL')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('sqlPrivateIPAddress')]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+	{
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicNameAPP')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('appPrivateIPAddress')]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },	
+    {
+      "name": "[parameters('appVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('appStorageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameAPP'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('appVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('appVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('appImagePublisher')]",
+            "offer": "[parameters('appImageOffer')]",
+            "sku": "[parameters('appImageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('appVMName'), '-osDisk')]",
+            "vhd": {
+              "uri": "[concat('http://', variables('appStorageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('appVMName')), '-osDisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(parameters('appVMName'), '-datadisk')]",
+              "vhd": {
+                "Uri": "[concat('http://', variables('appStorageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('appVMName')), '-datadisk.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "[parameters('appDataDiskGiB')]",
+              "lun": 0
+            }
+          ]		  
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+			        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameAPP'))]"
+            }
+          ]
+        }
+      }
+	},	
+	{
+	  "apiVersion": "[variables('apiVersion')]",
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('appVMName'), '/joindomain')]",
+	  "location": "[resourceGroup().location]",
+	  "dependsOn": [
+		"[resourceId('Microsoft.Compute/virtualMachines', parameters('appVMName'))]"
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Compute",
+		"type": "JsonADDomainExtension",
+		"typeHandlerVersion": "1.0",
+		"settings": {
+		  "Name": "[parameters('domainToJoin')]",
+		  "User": "[concat(parameters('domainToJoin'), '\\', parameters('domainUsername'))]",
+		  "Restart": "true",
+		  "Options": "[parameters('domainJoinOptions')]"
+		},
+		"protectedsettings": {
+		  "Password": "[parameters('domainPassword')]"
+		}
+	  }
+	},	
+  {
+    "name": "[parameters('sqlVMName')]",
+    "type": "Microsoft.Compute/virtualMachines",
+    "apiVersion": "[variables('apiVersion')]",
+    "location": "[resourceGroup().location]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Storage/storageAccounts', variables('sqlStorageAccountName'))]",
+      "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameSQL'))]"
+    ],
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "[parameters('sqlVMSize')]"
+      },
+      "osProfile": {
+        "computerName": "[parameters('sqlVMName')]",
+        "adminUsername": "[parameters('adminUsername')]",
+        "adminPassword": "[parameters('adminPassword')]"
+      },
+      "storageProfile": {
+        "imageReference": {
+          "publisher": "[parameters('sqlImagePublisher')]",
+          "offer": "[parameters('sqlImageOffer')]",
+          "sku": "[parameters('sqlImageSku')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "name": "[concat(parameters('sqlVMName'), '-osDisk')]",
+          "vhd": {
+            "uri": "[concat('http://', variables('sqlStorageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('sqlVMName')), '-osDisk.vhd')]"
+          },
+          "caching": "ReadWrite",
+          "createOption": "FromImage"
+        },
+        "dataDisks": [
+          {
+            "name": "[concat(parameters('sqlVMName'), '-datadisk')]",
+            "vhd": {
+              "Uri": "[concat('http://', variables('sqlStorageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('sqlVMName')), '-datadisk.vhd')]"
+            },
+            "caching": "None",
+            "createOption": "Empty",
+            "diskSizeGB": "[parameters('sqlDataDiskGiB')]",
+            "lun": 0
+          }
+        ]		  
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+      "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameSQL'))]"
+          }
+        ]
+      }
+    }
+	},
+	{
+	  "apiVersion": "[variables('apiVersion')]",
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('sqlVMName'), '/joindomain')]",
+	  "location": "[resourceGroup().location]",
+	  "dependsOn": [
+		"[resourceId('Microsoft.Compute/virtualMachines', parameters('sqlVMName'))]"
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Compute",
+		"type": "JsonADDomainExtension",
+		"typeHandlerVersion": "1.0",
+		"settings": {
+		  "Name": "[parameters('domainToJoin')]",
+		  "User": "[concat(parameters('domainToJoin'), '\\', parameters('domainUsername'))]",
+		  "Restart": "true",
+		  "Options": "[parameters('domainJoinOptions')]"
+		},
+		"protectedsettings": {
+		  "Password": "[parameters('domainPassword')]"
+		}
+	  }
+	},	 
+	{
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('sqlVMName'),'/configureSQLNode')]",
+	  "apiVersion": "[variables('apiVersion')]",
+	  "location": "[resourceGroup().location]",
+	  "dependsOn": [
+		"[resourceId('Microsoft.Compute/virtualMachines/', parameters('sqlVMName'))]",
+		"[concat(resourceGroup().id, '/providers/Microsoft.Compute/virtualMachines/', parameters('sqlVMName'), '/extensions/joindomain')]"		
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Compute",
+		"type": "CustomScriptExtension",
+		"typeHandlerVersion": "1.8",
+		"settings": {
+		  "fileUris": [
+			"[concat(parameters('scriptBaseUri'), '/configuresql.ps1')]"
+		  ]
+		},
+		"protectedSettings": {
+		  "commandToExecute": "[variables('sqlNodeCommandStr')]"
+		}
+	  }
+	},	
+	{
+    "apiVersion": "[variables('apiVersion')]",
+    "type": "Microsoft.Compute/virtualMachines",
+    "name": "[parameters('clusterName')]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines', parameters('sqlVMName'))]",
+      "[concat(resourceGroup().id, '/providers/Microsoft.Compute/virtualMachines/', parameters('sqlVMName'), '/extensions/joindomain')]",
+      "[concat(resourceGroup().id, '/providers/Microsoft.Compute/virtualMachines/', parameters('sqlVMName'), '/extensions/configureSQLNode')]",
+      "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameHN'))]",
+      "[resourceId('Microsoft.Storage/storageAccounts', variables('hnStorageAccountName'))]"
+    ],	  
+    "location": "[resourceGroup().location]",
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "[parameters('headNodeVMSize')]"
+      },
+      "osProfile": {
+        "computerName": "[parameters('clusterName')]",
+        "adminUsername": "[parameters('adminUsername')]",
+        "adminPassword": "[parameters('adminPassword')]"
+      },
+      "storageProfile": {
+        "imageReference": {
+          "publisher": "[parameters('hpcNodeImagePublisher')]",
+          "offer": "[parameters('hpcNodeImageOffer')]",
+          "sku": "[parameters('headNodeImageSku')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "name": "[concat(parameters('clusterName'), '-osDisk')]",
+          "vhd": {
+            "uri": "[concat('http://', variables('hnStorageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('clusterName')), '-osDisk.vhd')]"
+          },
+          "caching": "ReadOnly",
+          "createOption": "FromImage"
+        }
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameHN'))]"
+          }
+        ]
+      }
+    }
+	},
+	{
+	  "apiVersion": "[variables('apiVersion')]",
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('clusterName'), '/joindomain')]",
+	  "location": "[resourceGroup().location]",
+	  "dependsOn": [
+		  "[resourceId('Microsoft.Compute/virtualMachines', parameters('clusterName'))]"
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Compute",
+		"type": "JsonADDomainExtension",
+		"typeHandlerVersion": "1.0",
+		"settings": {
+		  "Name": "[parameters('domainToJoin')]",
+		  "User": "[concat(parameters('domainToJoin'), '\\', parameters('domainUsername'))]",
+		  "Restart": "true",
+		  "Options": "[parameters('domainJoinOptions')]"
+		},
+		"protectedsettings": {
+		  "Password": "[parameters('domainPassword')]"
+		}
+	  }
+	},
+	{
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
+	  "apiVersion": "[variables('apiVersion')]",
+	  "location": "[resourceGroup().location]",
+	  "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
+      "[concat(resourceGroup().id, '/providers/Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/joindomain')]"		
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Compute",
+		"type": "CustomScriptExtension",
+		"typeHandlerVersion": "1.8",
+		"settings": {
+		  "fileUris": [
+			"[concat(parameters('scriptBaseUri'), '/PrepareHN.ps1')]",
+			"[concat(parameters('scriptBaseUri'), '/HPCHNPrepare.ps1')]"
+		  ]
+		},
+		"protectedSettings": {
+		  "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'), variables('apiVersion')).key1, '\" -PublicDnsName ', parameters('clusterName'))]"
+		}
+	  }
+	},	
+  {
+    "type": "Microsoft.Storage/storageAccounts",
+    "name": "[concat(parameters('storageAccountNamePrefix'), 'cn', padLeft(string(copyIndex(variables('cnStorageAccountStartIndex'))), variables('storageAccountIndexWidth'), '0'))]",
+    "apiVersion": "[variables('apiVersion')]",
+    "location": "[resourceGroup().location]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Compute/virtualMachines', parameters('clusterName'))]"
+    ],
+    "copy": {
+      "name": "createHPCStorageAccounts",
+      "count": "[variables('cnStorageAccountNumber')]"
+    },
+    "properties": {
+      "accountType": "[parameters('storageAccountType')]"
+    }
+  },
+  {
+    "apiVersion": "[variables('apiVersion')]",
+    "type": "Microsoft.Network/networkInterfaces",
+    "name": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'), variables('nicNameSuffix'))]",
+    "location": "[resourceGroup().location]",
+    "dependsOn": [
+      "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameSQL'))]",
+      "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameAPP'))]",
+      "[resourceId('Microsoft.Network/networkInterfaces', variables('nicNameHN'))]"
+    ],
+    "copy": {
+      "name": "createHPCcnNICs",
+      "count": "[variables('computeNodeNumber')]"
+    },	  
+    "properties": {
+      "ipConfigurations": [
+        {
+          "name": "IPConfig",
+          "properties": {
+            "privateIPAllocationMethod": "Dynamic",
+            "subnet": {
+              "id": "[variables('subnetRef')]"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "apiVersion": "[variables('apiVersion')]",
+    "type": "Microsoft.Compute/virtualMachines",
+    "name": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+    "location": "[resourceGroup().location]",
+    "copy": {
+      "name": "createComputeNodes",
+      "count": "[variables('computeNodeNumber')]"
+    },	
+    "dependsOn": [
+      "createHPCcnNICs",
+      "createHPCStorageAccounts",
+      "[concat(resourceGroup().id, '/providers/Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/configureHeadNode')]"
+    ],
+    "properties": {
+      "availabilitySet": {
+        "id": "[resourceid('Microsoft.Compute/availabilitySets', concat(variables('availabilitySetNamePrefix'), padLeft(string(div(add(copyIndex(), 1), parameters('nbrVMPerAvailabilitySet'))), 3, '0')))]"
+      },
+      "hardwareProfile": {
+        "vmSize": "[parameters('computeNodeVMSize')]"
+      },
+      "osProfile": {
+        "computerName": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+        "adminUsername": "[parameters('adminUsername')]",
+        "adminPassword": "[parameters('adminPassword')]",
+        "customData": "[variables('computeNodeCustomData')]"
+      },
+      "storageProfile": {
+        "imageReference": {
+          "publisher": "[parameters('hpcNodeImagePublisher')]",
+          "offer": "[parameters('hpcNodeImageOffer')]",
+          "sku": "[parameters('computeNodeImageSku')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "name": "osDisk",
+          "vhd": {
+            "uri": "[concat('http://', parameters('storageAccountNamePrefix'), 'cn', padLeft(string(add(div(copyIndex(), parameters('nbrCNPerStorageAccount')), variables('cnStorageAccountStartIndex'))), variables('storageAccountIndexWidth'), '0'),'.blob.core.windows.net/vhds/', toLower(parameters('computeNodeNamePrefix')), padLeft(string(copyIndex()), 3, '0'), '-os', '.vhd')]"
+          },
+          "caching": "ReadOnly",
+          "createOption": "FromImage"
+        }
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+            "id": "[resourceId('Microsoft.Network/networkInterfaces/', concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'), variables('nicNameSuffix')))]"
+          }
+        ]
+      }
+    }
+	},
+	{
+	  "type": "Microsoft.Compute/virtualMachines/extensions",
+	  "name": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'), '/configureComputeNode')]",
+	  "apiVersion": "[variables('apiVersion')]",
+	  "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "configureComputeNodes",
+        "count": "[variables('computeNodeNumber')]"
+      },	  
+	  "dependsOn": [
+		  "createComputeNodes"
+	  ],
+	  "properties": {
+		"publisher": "Microsoft.Powershell",
+		"type": "DSC",
+		"typeHandlerVersion": "2.26",
+		"settings": {
+		  "wmfVersion": "5.0",
+		  "configuration": {
+        "url": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
+        "script": "ConfigComputeNode.ps1",
+        "function": "ConfigComputeNode"
+		  },
+		  "configurationArguments": {
+        "DomainName": "[parameters('domainToJoin')]"
+		  }		  
+	    },
+		"protectedSettings": {
+			"configurationArguments": {
+			  "AdminCreds": {
+          "UserName": "[parameters('domainUsername')]",
+          "Password": "[parameters('domainPassword')]"
+				}
+			}
+		}
+	  }
+	}
+  ],
+  "outputs": { }
+}
