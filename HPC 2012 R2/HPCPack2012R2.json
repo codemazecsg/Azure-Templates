@@ -776,9 +776,9 @@
 	  "properties": {
 		"publisher": "Microsoft.Powershell",
 		"type": "DSC",
-		"typeHandlerVersion": "2.26",
+    "typeHandlerVersion": "2.74",
 		"settings": {
-		  "wmfVersion": "5.0",
+		  "wmfVersion": "5.1",
 		  "configuration": {
         "url": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
         "script": "ConfigComputeNode.ps1",
