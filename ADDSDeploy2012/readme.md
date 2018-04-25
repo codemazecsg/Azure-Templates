@@ -1,1 +1,1 @@
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcodemazecsg%2fHPC-Templates%2fmaster%2fADDSDeploy2012%2faddssetup.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcodemazecsg%2FHPC-Templates%2fmaster%2FADDSDeploy2012%2Faddssetup.json)
