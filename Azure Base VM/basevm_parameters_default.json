@@ -6,10 +6,10 @@
             "value": "VMLab"
         },
         "baseIndex": {
-            "value": 7
+            "value": 1
         },
         "vnetResourceGroupName": {
-            "value": "VMLabE"
+            "value": "RESIZETEST01"
         },
         "virtualNetworkName": {
             "value": "DefaultLabNetwork"
@@ -29,7 +29,7 @@
             "value": 1
         },
         "vmSKU": {
-            "value": "Standard_D8s_v3"
+            "value": "Standard_D2s_v3"
         },
         "availabilitySetPrefix": {
             "value": "AvailSet"
@@ -38,7 +38,7 @@
             "value": 1
         },
         "diskType": {
-            "value": "Premium_LRS"
+            "value": "Standard_LRS"
         },
         "dataDisksPerVM": {
             "value": 1
